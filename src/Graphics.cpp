@@ -1,7 +1,6 @@
 #include "Graphics.h"
 
 #define DXCHECK(Result) if (FAILED(Result)) { return -1; }
-#define DXCHECKMSG(Result, Msg) if (FAILED(Result)) { OutputDebugStringA((Msg)); return -1; }
 
 IDXGISwapChain* DX_SwapChain = nullptr;
 ID3D11Device* DX_Device = nullptr;
@@ -159,7 +158,55 @@ TextureStateT TextureStateT::Init(Image32& Image)
     return Result;
 }
 
-int InitGraphics()
+void Graphics::SubmitDraw(DrawStateT& InShaderState, MeshStateT& InVxState)
+{
+    ASSERT(InShaderState.VxInputLayout && InShaderState.VxShader && InShaderState.PxShader);
+    DX_ImmediateContext->IASetInputLayout(InShaderState.VxInputLayout);
+    DX_ImmediateContext->VSSetShader(InShaderState.VxShader, nullptr, 0);
+    DX_ImmediateContext->PSSetShader(InShaderState.PxShader, nullptr, 0);
+
+    UINT Stride = InVxState.VxSize;
+    UINT Offset = 0;
+    DX_ImmediateContext->IASetVertexBuffers(0, 1, &InVxState.VxBuffer, &Stride, &Offset);
+    DX_ImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    if (InVxState.IxBuffer)
+    {
+        DX_ImmediateContext->IASetIndexBuffer(InVxState.IxBuffer, DXGI_FORMAT_R32_UINT, 0);
+        DX_ImmediateContext->DrawIndexed(InVxState.NumIx, 0u, 0u);
+    }
+    else
+    {
+        DX_ImmediateContext->IASetVertexBuffers(0, 1, &InVxState.VxBuffer, &Stride, &Offset);
+        DX_ImmediateContext->Draw(InVxState.NumIx, 0u);
+    }
+}
+
+void Graphics::Draw()
+{
+    DX_ImmediateContext->OMSetRenderTargets(1, &DX_RenderTargetView, DX_DepthStencilView);
+
+    constexpr float ClearColor[4] = { NORM_RGB(30, 30, 46), 1.0f};
+    constexpr float ClearDepth = 1.0f;
+    DX_ImmediateContext->ClearRenderTargetView(DX_RenderTargetView, ClearColor);
+    DX_ImmediateContext->ClearDepthStencilView(DX_DepthStencilView, D3D11_CLEAR_DEPTH, ClearDepth, 0);
+
+    WVPData WVP_Trans = { m4f::Identity(), m4f::Identity(), m4f::Identity() };
+    constexpr int WVPBufferSlot = 0;
+    DX_ImmediateContext->UpdateSubresource(DX_WVPBuffer, 0, nullptr, &WVP_Trans, sizeof(WVPData), 0);
+
+    {
+        DX_ImmediateContext->PSSetShaderResources(0, 1, &DebugTexture.SRV);
+        DX_ImmediateContext->PSSetSamplers(0, 1, &DefaultSamplerState);
+
+        DX_ImmediateContext->VSSetConstantBuffers(WVPBufferSlot, 1, &DX_WVPBuffer);
+
+        Graphics::SubmitDraw(ShaderTexture, MeshQuad);
+    }
+
+    DX_SwapChain->Present(0, 0);
+}
+
+int Graphics::Init()
 {
     HRESULT Result = S_OK;
 
@@ -174,10 +221,6 @@ int InitGraphics()
 
     CreateDXGIFactory1(__uuidof(IDXGIFactory), (void**)&DX_Factory);
 
-    DXGI_SAMPLE_DESC SharedSampleDesc = {};
-    SharedSampleDesc.Count = 4;
-    SharedSampleDesc.Quality = (UINT)D3D11_STANDARD_MULTISAMPLE_PATTERN;
-
     UINT FrameRefreshRate = 60;
     DXGI_SWAP_CHAIN_DESC swapchain_desc = {};
     swapchain_desc.BufferCount = 2;
@@ -188,7 +231,8 @@ int InitGraphics()
     swapchain_desc.BufferDesc.RefreshRate.Denominator = 1;
     swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapchain_desc.OutputWindow = hWindow;
-    swapchain_desc.SampleDesc = SharedSampleDesc;
+    swapchain_desc.SampleDesc = DXGI_SAMPLE_DESC{ 1, 0 };
+    swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapchain_desc.Windowed = true;
 
     UINT CreateDeviceFlags = 0;
@@ -238,7 +282,7 @@ int InitGraphics()
     DepthDesc.MipLevels = 1;
     DepthDesc.ArraySize = 1;
     DepthDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-    DepthDesc.SampleDesc = SharedSampleDesc;
+    DepthDesc.SampleDesc = DXGI_SAMPLE_DESC{ 1, 0 };
     DepthDesc.Usage = D3D11_USAGE_DEFAULT;
     DepthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
     DepthDesc.CPUAccessFlags = 0;
@@ -296,8 +340,8 @@ int InitGraphics()
             };
             D3D11_INPUT_ELEMENT_DESC InputLayoutDesc[] =
             {
-                {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-                {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+                { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+                { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
             };
             UINT NumInputElements = ARRAYSIZE(InputLayoutDesc);
 
@@ -314,8 +358,8 @@ int InitGraphics()
             };
             D3D11_INPUT_ELEMENT_DESC InputLayoutDesc[] =
             {
-                {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-                {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+                { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+                { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
             };
             UINT NumInputElements = ARRAYSIZE(InputLayoutDesc);
 
@@ -406,54 +450,33 @@ int InitGraphics()
     return Result;
 }
 
-void UpdateAndDraw()
+void Graphics::Term()
 {
-    WVPData WVP_Trans = { m4f::Identity(), m4f::Identity(), m4f::Identity() };
-    constexpr int WVPBufferSlot = 0;
-    DX_ImmediateContext->UpdateSubresource(DX_WVPBuffer, 0, nullptr, &WVP_Trans, sizeof(WVPData), 0);
+    // TODO: Release these!
+    IDXGISwapChain* DX_SwapChain = nullptr;
+    ID3D11Device* DX_Device = nullptr;
+    D3D_FEATURE_LEVEL UsedFeatureLevel;
+    ID3D11DeviceContext* DX_ImmediateContext = nullptr;
 
-    {
-        DX_ImmediateContext->PSSetShaderResources(0, 1, &DebugTexture.SRV);
-        DX_ImmediateContext->PSSetSamplers(0, 1, &DefaultSamplerState);
+    ID3D11Texture2D* DX_BackBuffer = nullptr;
+    ID3D11RenderTargetView* DX_RenderTargetView = nullptr;
 
-        DX_ImmediateContext->VSSetConstantBuffers(WVPBufferSlot, 1, &DX_WVPBuffer);
+    IDXGIFactory1* DX_Factory = nullptr;
 
-        Draw(ShaderTexture, MeshQuad);
-    }
-}
+    ID3D11RasterizerState* DX_RasterizerState = nullptr;
+    ID3D11Texture2D* DX_DepthStencil = nullptr;
+    ID3D11DepthStencilView* DX_DepthStencilView = nullptr;
+    ID3D11BlendState* DX_BlendState = nullptr;
 
-void Draw(DrawStateT& InShaderState, MeshStateT& InVxState)
-{
-    ASSERT(InShaderState.VxInputLayout && InShaderState.VxShader && InShaderState.PxShader);
-    DX_ImmediateContext->IASetInputLayout(InShaderState.VxInputLayout);
-    DX_ImmediateContext->VSSetShader(InShaderState.VxShader, nullptr, 0);
-    DX_ImmediateContext->PSSetShader(InShaderState.PxShader, nullptr, 0);
+    ID3D11SamplerState* DefaultSamplerState = nullptr;
 
-    UINT Stride = InVxState.VxSize;
-    UINT Offset = 0;
-    DX_ImmediateContext->IASetVertexBuffers(0, 1, &InVxState.VxBuffer, &Stride, &Offset);
-    DX_ImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    if (InVxState.IxBuffer)
-    {
-        DX_ImmediateContext->IASetIndexBuffer(InVxState.IxBuffer, DXGI_FORMAT_R32_UINT, 0);
-        DX_ImmediateContext->DrawIndexed(InVxState.NumIx, 0u, 0u);
-    }
-    else
-    {
-        DX_ImmediateContext->IASetVertexBuffers(0, 1, &InVxState.VxBuffer, &Stride, &Offset);
-        DX_ImmediateContext->Draw(InVxState.NumIx, 0u);
-    }
-}
+    ID3D11Buffer* DX_WVPBuffer = nullptr;
 
-void Draw()
-{
-    float ClearColor[4] = { NORM_RGB(30, 30, 46), 1.0f};
-    float fDepth = 1.0f;
-    DX_ImmediateContext->ClearRenderTargetView(DX_RenderTargetView, ClearColor);
-    DX_ImmediateContext->ClearDepthStencilView(DX_DepthStencilView, D3D11_CLEAR_DEPTH, fDepth, 0);
+    MeshStateT MeshQuad;
 
-    UpdateAndDraw();
+    DrawStateT ShaderColor;
+    DrawStateT ShaderTexture;
 
-    DX_SwapChain->Present(0, 0);
+    TextureStateT DebugTexture;
 }
 

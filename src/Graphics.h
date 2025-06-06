@@ -54,15 +54,22 @@ struct TextureStateT
 };
 
 int CompileShaderHelper(LPCWSTR SourceFileName, LPCSTR EntryPointFunction, LPCSTR Profile, ID3DBlob** ShaderBlob, const D3D_SHADER_MACRO* Defines = nullptr);
-int InitGraphics();
-void UpdateAndDraw();
-void Draw(DrawStateT& InShaderState, MeshStateT& InVxState);
+
+namespace Graphics
+{
+
+void SubmitDraw(DrawStateT& InShaderState, MeshStateT& InVxState);
 void Draw();
+int Init();
+void Term();
+
+}
 
 inline void SafeRelease(IUnknown*& Ptr)
 {
     if (Ptr) { Ptr->Release(); Ptr = nullptr; }
 }
+
 
 #endif // GRAPHICS_DX11_H
 

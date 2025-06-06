@@ -89,21 +89,19 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, PSTR CmdLine, int WndSh
 	{
 		hWindow = hWnd;
 
-		HRESULT Result = InitGraphics();
-		if (Result != S_OK)
-		{
-			DebugBreak();
-		}
+		HRESULT Result = Graphics::Init();
+		if (Result != S_OK) { DebugBreak(); }
 
+		bRunning = Result == S_OK;
 		ShowWindow(hWindow, WndShow);
-
-		bRunning = true;
 		while (bRunning)
 		{
 			WindowMsgLoop(hWindow);
 			UpdateWindow(hWindow);
-			Draw();
+			Graphics::Draw();
 		}
+
+		Graphics::Term();
 	}
 
 	return 0;
