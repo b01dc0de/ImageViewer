@@ -9,7 +9,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Graphics_DX11.cpp">
+    <ClCompile Include="src\Graphics.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\Main.cpp">
@@ -23,7 +23,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Graphics_DX11.h">
+    <ClInclude Include="src\Graphics.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\Math.h">

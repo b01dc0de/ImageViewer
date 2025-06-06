@@ -1,5 +1,5 @@
 #include "Common.h"
-#include "Graphics_DX11.h"
+#include "Graphics.h"
 
 // Globals
 bool bRunning = false;
@@ -81,7 +81,7 @@ int WindowMsgLoop(HWND hWindow)
 	return MsgCount;
 }
 
-int WINAPI WinMain_EmptyWindow(HINSTANCE hInst, HINSTANCE hPrevInst, PSTR CmdLine, int WndShow)
+int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, PSTR CmdLine, int WndShow)
 {
 	(void)hPrevInst;
 	(void)CmdLine;
@@ -89,25 +89,7 @@ int WINAPI WinMain_EmptyWindow(HINSTANCE hInst, HINSTANCE hPrevInst, PSTR CmdLin
 	{
 		hWindow = hWnd;
 
-		ShowWindow(hWindow, WndShow);
-
-		bRunning = true;
-		while (bRunning)
-		{
-			WindowMsgLoop(hWindow);
-		}
-	}
-	return 0;
-}
-int WINAPI WinMain_DX11_Demo(HINSTANCE hInst, HINSTANCE hPrevInst, PSTR CmdLine, int WndShow)
-{
-	(void)hPrevInst;
-	(void)CmdLine;
-	if (HWND hWnd = InitWindow(hInst, WinResX, WinResY))
-	{
-		hWindow = hWnd;
-
-		HRESULT Result = Graphics_DX11::InitGraphics();
+		HRESULT Result = InitGraphics();
 		if (Result != S_OK)
 		{
 			DebugBreak();
@@ -120,37 +102,10 @@ int WINAPI WinMain_DX11_Demo(HINSTANCE hInst, HINSTANCE hPrevInst, PSTR CmdLine,
 		{
 			WindowMsgLoop(hWindow);
 			UpdateWindow(hWindow);
-			Graphics_DX11::Draw();
+			Draw();
 		}
 	}
 
 	return 0;
 }
 
-int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, PSTR CmdLine, int WndShow)
-{
-	int Result = 0;
-
-	static const int Project_Win32_EmptyWindow= 0;
-	static const int Project_Win32_DX11_Demo = 1;
-
-	static int BuildProject = Project_Win32_DX11_Demo;
-	switch (BuildProject)
-	{
-		case Project_Win32_EmptyWindow:
-		{
-			Result = WinMain_EmptyWindow(hInst, hPrevInst, CmdLine, WndShow);
-		} break;
-		case Project_Win32_DX11_Demo:
-		{
-			Result = WinMain_DX11_Demo(hInst, hPrevInst, CmdLine, WndShow);
-		} break;
-		default:
-		{
-			Result = 1;
-			DebugBreak();
-		} break;
-	}
-
-	return Result;
-}

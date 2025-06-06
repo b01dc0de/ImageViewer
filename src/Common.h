@@ -30,6 +30,9 @@ extern UINT WinResY;
     #define APPNAME() ("ImageViewer")
 #endif
 
+#define ARRAY_SIZE(Arr) (sizeof((Arr)) / sizeof((Arr)[0]))
+#define ASSERT(Exp) { if (!(Exp)) { Outf("[error] ASSERT failed: %s\n", ##Exp); DebugBreak();} }
+
 // ImageViewer headers
 #include "Math.h"
 #include "Utils.h"
