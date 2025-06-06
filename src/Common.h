@@ -23,6 +23,7 @@ extern bool bRunning;
 extern HWND hWindow;
 extern UINT WinResX;
 extern UINT WinResY;
+extern float WinAspectRatio;
 
 #define CONFIG_DEBUG() (_DEBUG)
 #define CONFIG_RELEASE() !CONFIG_DEBUG()

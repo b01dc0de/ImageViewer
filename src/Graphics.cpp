@@ -190,12 +190,30 @@ void Graphics::Draw()
     DX_ImmediateContext->ClearRenderTargetView(DX_RenderTargetView, ClearColor);
     DX_ImmediateContext->ClearDepthStencilView(DX_DepthStencilView, D3D11_CLEAR_DEPTH, ClearDepth, 0);
 
-    WVPData WVP_Trans = { m4f::Identity(), m4f::Identity(), m4f::Identity() };
+    TextureStateT& ActiveTexture = DebugTexture;
+    float ScaleX = 1.0f;
+    float ScaleY = 1.0f;
+    if (ActiveTexture.AspectRatio < WinAspectRatio)
+    {
+        ScaleX = ActiveTexture.AspectRatio / WinAspectRatio;
+    }
+    else if (ActiveTexture.AspectRatio > WinAspectRatio)
+    {
+        ScaleY = WinAspectRatio / ActiveTexture.AspectRatio;
+    }
+
+    m4f QuadWorld = {
+        { ScaleX, 0.0f, 0.0f, 0.0f },
+        { 0.0f, ScaleY, 0.0f, 0.0f },
+        { 0.0f, 0.0f, 1.0f, 0.0f },
+        { 0.0f, 0.0f, 0.0f, 1.0f },
+    };
+    WVPData WVP_Trans = { QuadWorld, m4f::Identity(), m4f::Identity() };
     constexpr int WVPBufferSlot = 0;
     DX_ImmediateContext->UpdateSubresource(DX_WVPBuffer, 0, nullptr, &WVP_Trans, sizeof(WVPData), 0);
 
     {
-        DX_ImmediateContext->PSSetShaderResources(0, 1, &DebugTexture.SRV);
+        DX_ImmediateContext->PSSetShaderResources(0, 1, &ActiveTexture.SRV);
         DX_ImmediateContext->PSSetSamplers(0, 1, &DefaultSamplerState);
 
         DX_ImmediateContext->VSSetConstantBuffers(WVPBufferSlot, 1, &DX_WVPBuffer);
@@ -379,32 +397,12 @@ int Graphics::Init()
 
     // Mesh Data
     {
-        /*
-        VertexColor Vertices_Triangle[] =
-        {
-            {{0.0f, 0.5f, 0.5f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
-            {{0.5f, -0.5f, 0.5f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
-            {{-0.5f, -0.5f, 0.5f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}}
-        };
-        UINT Indices_Triangle[] = {
-            0, 2, 1
-        };
-        MeshStateT Triangle = MeshStateT::Init
-        (
-            sizeof(VertexColor),
-            ARRAY_SIZE(Vertices_Triangle),
-            Vertices_Triangle,
-            ARRAY_SIZE(Indices_Triangle),
-            Indices_Triangle
-        );
-        */
-
         VertexTexture Vertices_Quad[]
         {
-            {{-0.5f, +0.5f, +0.5f, +1.0f}, {+0.0f, +0.0f}},
-            {{+0.5f, +0.5f, +0.5f, +1.0f}, {+1.0f, +0.0f}},
-            {{-0.5f, -0.5f, +0.5f, +1.0f}, {+0.0f, +1.0f}},
-            {{+0.5f, -0.5f, +0.5f, +1.0f}, {+1.0f, +1.0f}},
+            {{-1.0f, +1.0f, +0.5f, +1.0f}, {+0.0f, +0.0f}},
+            {{+1.0f, +1.0f, +0.5f, +1.0f}, {+1.0f, +0.0f}},
+            {{-1.0f, -1.0f, +0.5f, +1.0f}, {+0.0f, +1.0f}},
+            {{+1.0f, -1.0f, +0.5f, +1.0f}, {+1.0f, +1.0f}},
         };
         UINT Indices_Quad[] =
         {
@@ -452,31 +450,6 @@ int Graphics::Init()
 
 void Graphics::Term()
 {
-    // TODO: Release these!
-    IDXGISwapChain* DX_SwapChain = nullptr;
-    ID3D11Device* DX_Device = nullptr;
-    D3D_FEATURE_LEVEL UsedFeatureLevel;
-    ID3D11DeviceContext* DX_ImmediateContext = nullptr;
-
-    ID3D11Texture2D* DX_BackBuffer = nullptr;
-    ID3D11RenderTargetView* DX_RenderTargetView = nullptr;
-
-    IDXGIFactory1* DX_Factory = nullptr;
-
-    ID3D11RasterizerState* DX_RasterizerState = nullptr;
-    ID3D11Texture2D* DX_DepthStencil = nullptr;
-    ID3D11DepthStencilView* DX_DepthStencilView = nullptr;
-    ID3D11BlendState* DX_BlendState = nullptr;
-
-    ID3D11SamplerState* DefaultSamplerState = nullptr;
-
-    ID3D11Buffer* DX_WVPBuffer = nullptr;
-
-    MeshStateT MeshQuad;
-
-    DrawStateT ShaderColor;
-    DrawStateT ShaderTexture;
-
-    TextureStateT DebugTexture;
+    // TODO: Release DX/COM refs!
 }
 

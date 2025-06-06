@@ -6,18 +6,20 @@ struct v2f
     float X = 0.0f;
     float Y = 0.0f;
 };
+
 struct v3f
 {
     float X = 0.0f;
     float Y = 0.0f;
     float Z = 0.0f;
 };
+
 struct v4f
 {
     float X = 0.0f;
     float Y = 0.0f;
     float Z = 0.0f;
-    float W = 0.0f;
+    float W = 1.0f;
 };
 
 float Dot(v2f Left, v2f Right);
@@ -31,6 +33,7 @@ struct m2f
     v2f r1;
     static m2f Identity();
 };
+
 struct m3f
 {
     v3f r0;
@@ -38,6 +41,7 @@ struct m3f
     v3f r2;
     static m3f Identity();
 };
+
 struct m4f
 {
     v4f r0;
