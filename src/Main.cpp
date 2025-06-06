@@ -11,27 +11,27 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 HWND InitWindow(HINSTANCE hInstance, int Width, int Height)
 {
-	WNDCLASSEX WndClass = {};
-	WndClass.cbSize = sizeof(WNDCLASSEX);
+	WNDCLASSEXA WndClass = {};
+	WndClass.cbSize = sizeof(WNDCLASSEXA);
 	WndClass.style = CS_GLOBALCLASS | CS_HREDRAW | CS_VREDRAW;
 	WndClass.lpfnWndProc = WindowProc;
 	WndClass.hInstance = hInstance;
 	WndClass.lpszClassName = APPNAME();
 
-	RegisterClassEx(&WndClass);
+	RegisterClassExA(&WndClass);
 
 	RECT WndRect = { 0, 0, (LONG)Width, (LONG)Height};
 	UINT WndStyle = WS_CAPTION | WS_OVERLAPPEDWINDOW;
 	UINT WndExStyle = WS_EX_OVERLAPPEDWINDOW;
 	AdjustWindowRectEx(&WndRect, WndStyle, FALSE, WndExStyle);
 
-	HWND NewWindow = CreateWindowEx(
+	HWND NewWindow = CreateWindowExA(
 		WndExStyle,
 		APPNAME(),
 		APPNAME(),
 		WndStyle,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
+		0,
+		0,
 		WndRect.right - WndRect.left,
 		WndRect.bottom - WndRect.top,
 		nullptr,
@@ -61,7 +61,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		} break;
 		default:
 		{
-			Result = DefWindowProc(hwnd, uMsg, wParam, lParam);
+			Result = DefWindowProcA(hwnd, uMsg, wParam, lParam);
 		} break;
 	}
 	
@@ -72,19 +72,31 @@ int WindowMsgLoop(HWND hWindow)
 {
 	MSG Msg = {};
 	int MsgCount = 0;
-    while (PeekMessage(&Msg, hWindow, 0, 0, PM_REMOVE) > 0)
+    while (PeekMessageA(&Msg, hWindow, 0, 0, PM_REMOVE) > 0)
     {
         TranslateMessage(&Msg);
-        DispatchMessage(&Msg);
+        DispatchMessageA(&Msg);
 		MsgCount++;
     }
 	return MsgCount;
+}
+
+void Win32_Init()
+{
+	//SetProcessDPIAware();
+
+	RECT WorkArea{};
+	SystemParametersInfoA(SPI_GETWORKAREA, 0, &WorkArea, 0);
+
+	WinResX = WorkArea.right - WorkArea.left;
+	WinResY = WorkArea.bottom - WorkArea.top;
 }
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, PSTR CmdLine, int WndShow)
 {
 	(void)hPrevInst;
 	(void)CmdLine;
+	Win32_Init();
 	if (HWND hWnd = InitWindow(hInst, WinResX, WinResY))
 	{
 		hWindow = hWnd;

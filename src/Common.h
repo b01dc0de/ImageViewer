@@ -27,12 +27,7 @@ extern UINT WinResY;
 #define CONFIG_DEBUG() (_DEBUG)
 #define CONFIG_RELEASE() !CONFIG_DEBUG()
 
-#if UNICODE
-    #define APPNAME() (L"ImageViewer")
-#else
-    #define APPNAME() ("ImageViewer")
-#endif
-
+#define APPNAME() ("ImageViewer")
 #define ARRAY_SIZE(Arr) (sizeof((Arr)) / sizeof((Arr)[0]))
 #if CONFIG_DEBUG()
     #define ASSERT(Exp) { if (!(Exp)) { Outf("[error] ASSERT failed: %s\n", ##Exp); DebugBreak();} }
