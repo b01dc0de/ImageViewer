@@ -3,6 +3,8 @@
 
 void Outf(const char* Fmt, ...);
 
+#define NORM_RGB(R, G, B) (R)/255.0f, (G)/255.0f, (B)/255.0f
+
 struct RGBA32
 {
     u8 R;

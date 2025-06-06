@@ -18,33 +18,32 @@ ID3D11Texture2D* DX_DepthStencil = nullptr;
 ID3D11DepthStencilView* DX_DepthStencilView = nullptr;
 ID3D11BlendState* DX_BlendState = nullptr;
 
-ID3D11Texture2D* DebugTexture = nullptr;
-ID3D11ShaderResourceView* DebugTexture_SRV = nullptr;
-ID3D11SamplerState* DebugSamplerState = nullptr;
+ID3D11SamplerState* DefaultSamplerState = nullptr;
 
 ID3D11Buffer* DX_WVPBuffer = nullptr;
 
-VxState Triangle;
-VxState Quad;
+MeshStateT MeshQuad;
 
-ShaderState ShaderColor;
-ShaderState ShaderTexture;
+DrawStateT ShaderColor;
+DrawStateT ShaderTexture;
 
-VxState VxState::Init(size_t _VxSize, size_t _NumVx, void* VxData, size_t _NumIx, void* IxData)
+TextureStateT DebugTexture;
+
+MeshStateT MeshStateT::Init(size_t _VxSize, size_t _NumVx, void* VxData, size_t _NumIx, void* _IxData)
 {
-    ASSERT(_VxSize && _NumVx && VxData && (_NumIx == 0 || IxData));
+    ASSERT(_VxSize && _NumVx && VxData && (_NumIx == 0 || _IxData));
 
-    VxState Result{ _VxSize, _NumVx, _NumIx };
+    MeshStateT Result{ _VxSize, _NumVx, _NumIx };
 
     D3D11_BUFFER_DESC VertexBufferDesc = { _VxSize * _NumVx, D3D11_USAGE_DEFAULT, D3D11_BIND_VERTEX_BUFFER, 0, 0 };
     D3D11_SUBRESOURCE_DATA VertexBufferInitData = { VxData, 0, 0 };
     ASSERT(!FAILED(DX_Device->CreateBuffer(&VertexBufferDesc, &VertexBufferInitData, &Result.VxBuffer)));
 
-    if (_NumIx && IxData)
+    if (_NumIx && _IxData)
     {
         ASSERT(_NumIx % 3 == 0);
         D3D11_BUFFER_DESC IndexBufferDesc = { _NumIx * sizeof(UINT), D3D11_USAGE_DEFAULT, D3D11_BIND_INDEX_BUFFER, 0, 0};
-        D3D11_SUBRESOURCE_DATA IndexBufferInitData = { IxData, 0, 0 };
+        D3D11_SUBRESOURCE_DATA IndexBufferInitData = { _IxData, 0, 0 };
         ASSERT(!FAILED(DX_Device->CreateBuffer(&IndexBufferDesc, &IndexBufferInitData, &Result.IxBuffer)));
     }
 
@@ -107,9 +106,9 @@ int CompileShaderHelper
     return Result;
 };
 
-ShaderState ShaderState::Init(LPCWSTR ShaderFileName, const D3D_SHADER_MACRO* Defines, D3D11_INPUT_ELEMENT_DESC* InputLayoutDesc, UINT NumInputElements)
+DrawStateT DrawStateT::Init(LPCWSTR ShaderFileName, const D3D_SHADER_MACRO* Defines, D3D11_INPUT_ELEMENT_DESC* InputLayoutDesc, UINT NumInputElements)
 {
-    ShaderState Result{};
+    DrawStateT Result{};
 
     ID3DBlob* VSCodeBlob = nullptr;
     ID3DBlob* PSCodeBlob = nullptr;
@@ -125,6 +124,37 @@ ShaderState ShaderState::Init(LPCWSTR ShaderFileName, const D3D_SHADER_MACRO* De
     }
     if (VSCodeBlob) { VSCodeBlob->Release(); }
     if (PSCodeBlob) { PSCodeBlob->Release(); }
+
+    return Result;
+}
+
+TextureStateT TextureStateT::Init(Image32& Image)
+{
+    ASSERT(Image.Width && Image.Height && Image.PxCount && Image.PxBytes && Image.PixelBuffer);
+
+    TextureStateT Result{};
+    Result.Width = Image.Width;
+    Result.Height = Image.Height;
+    Result.AspectRatio = (float)Image.Width / (float)Image.Height;
+
+    D3D11_SUBRESOURCE_DATA TextureResourceData[] = { {} };
+    TextureResourceData[0].pSysMem = Image.PixelBuffer;
+    TextureResourceData[0].SysMemPitch = sizeof(u32) * Image.Width;
+    TextureResourceData[0].SysMemSlicePitch = sizeof(u32) * Image.Width * Image.Height;
+    D3D11_TEXTURE2D_DESC TextureDesc = {};
+    TextureDesc.Width = Image.Width;
+    TextureDesc.Height = Image.Height;
+    TextureDesc.MipLevels = 1;
+    TextureDesc.ArraySize = 1;
+    TextureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    TextureDesc.SampleDesc.Count = 1;
+    TextureDesc.SampleDesc.Quality = 0;
+    TextureDesc.Usage = D3D11_USAGE_DEFAULT;
+    TextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    TextureDesc.CPUAccessFlags = 0;
+    TextureDesc.MiscFlags = 0;
+    ASSERT(!FAILED(DX_Device->CreateTexture2D(&TextureDesc, &TextureResourceData[0], &Result.Tex2D)));
+    ASSERT(!FAILED(DX_Device->CreateShaderResourceView(Result.Tex2D, nullptr, &Result.SRV)));
 
     return Result;
 }
@@ -271,7 +301,7 @@ int InitGraphics()
             };
             UINT NumInputElements = ARRAYSIZE(InputLayoutDesc);
 
-            ShaderColor = ShaderState::Init(ShaderFileName, Defines, InputLayoutDesc, NumInputElements);
+            ShaderColor = DrawStateT::Init(ShaderFileName, Defines, InputLayoutDesc, NumInputElements);
         }
 
         // ShaderTexture
@@ -289,7 +319,7 @@ int InitGraphics()
             };
             UINT NumInputElements = ARRAYSIZE(InputLayoutDesc);
 
-            ShaderTexture = ShaderState::Init(ShaderFileName, Defines, InputLayoutDesc, NumInputElements);
+            ShaderTexture = DrawStateT::Init(ShaderFileName, Defines, InputLayoutDesc, NumInputElements);
         }
     }
 
@@ -305,6 +335,7 @@ int InitGraphics()
 
     // Mesh Data
     {
+        /*
         VertexColor Vertices_Triangle[] =
         {
             {{0.0f, 0.5f, 0.5f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
@@ -314,7 +345,7 @@ int InitGraphics()
         UINT Indices_Triangle[] = {
             0, 2, 1
         };
-        Triangle = VxState::Init
+        MeshStateT Triangle = MeshStateT::Init
         (
             sizeof(VertexColor),
             ARRAY_SIZE(Vertices_Triangle),
@@ -322,6 +353,7 @@ int InitGraphics()
             ARRAY_SIZE(Indices_Triangle),
             Indices_Triangle
         );
+        */
 
         VertexTexture Vertices_Quad[]
         {
@@ -335,7 +367,7 @@ int InitGraphics()
             0, 2, 1,
             1, 2, 3
         };
-        Quad = VxState::Init
+        MeshQuad = MeshStateT::Init
         (
             sizeof(VertexTexture),
             ARRAY_SIZE(Vertices_Quad),
@@ -350,39 +382,25 @@ int InitGraphics()
         Image32 BMPImage = {};
         GetDebugBMP(BMPImage);
 
-        D3D11_SUBRESOURCE_DATA DebugTexDataDesc[] = { {} };
-        DebugTexDataDesc[0].pSysMem = BMPImage.PixelBuffer;
-        DebugTexDataDesc[0].SysMemPitch = sizeof(u32) * BMPImage.Width;
-        DebugTexDataDesc[0].SysMemSlicePitch = sizeof(u32) * BMPImage.Width * BMPImage.Height;
-        D3D11_TEXTURE2D_DESC DebugTextureDesc = {};
-        DebugTextureDesc.Width = BMPImage.Width;
-        DebugTextureDesc.Height = BMPImage.Height;
-        DebugTextureDesc.MipLevels = 1;
-        DebugTextureDesc.ArraySize = 1;
-        DebugTextureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        DebugTextureDesc.SampleDesc.Count = 1;
-        DebugTextureDesc.SampleDesc.Quality = 0;
-        DebugTextureDesc.Usage = D3D11_USAGE_DEFAULT;
-        DebugTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-        DebugTextureDesc.CPUAccessFlags = 0;
-        DebugTextureDesc.MiscFlags = 0;
-        DXCHECK(DX_Device->CreateTexture2D(&DebugTextureDesc, &DebugTexDataDesc[0], &DebugTexture));
-        DXCHECK(DX_Device->CreateShaderResourceView(DebugTexture, nullptr, &DebugTexture_SRV));
-
-        D3D11_TEXTURE_ADDRESS_MODE AddressMode = D3D11_TEXTURE_ADDRESS_WRAP;
-        D3D11_SAMPLER_DESC DebugTextureSamplerDesc = {};
-        DebugTextureSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
-        DebugTextureSamplerDesc.AddressU = AddressMode;
-        DebugTextureSamplerDesc.AddressV = AddressMode;
-        DebugTextureSamplerDesc.AddressW = AddressMode;
-        DebugTextureSamplerDesc.MipLODBias = 0.0f;
-        DebugTextureSamplerDesc.MaxAnisotropy = 0;
-        DebugTextureSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-        DebugTextureSamplerDesc.MinLOD = 0;
-        DebugTextureSamplerDesc.MaxLOD = 0;
-        DXCHECK(DX_Device->CreateSamplerState(&DebugTextureSamplerDesc, &DebugSamplerState));
+        DebugTexture = TextureStateT::Init(BMPImage);
 
         delete[] BMPImage.PixelBuffer;
+    }
+
+    // Default sampler state
+    {
+        D3D11_TEXTURE_ADDRESS_MODE AddressMode = D3D11_TEXTURE_ADDRESS_WRAP;
+        D3D11_SAMPLER_DESC DefaultSamplerDesc = {};
+        DefaultSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+        DefaultSamplerDesc.AddressU = AddressMode;
+        DefaultSamplerDesc.AddressV = AddressMode;
+        DefaultSamplerDesc.AddressW = AddressMode;
+        DefaultSamplerDesc.MipLODBias = 0.0f;
+        DefaultSamplerDesc.MaxAnisotropy = 0;
+        DefaultSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+        DefaultSamplerDesc.MinLOD = 0;
+        DefaultSamplerDesc.MaxLOD = 0;
+        DXCHECK(DX_Device->CreateSamplerState(&DefaultSamplerDesc, &DefaultSamplerState));
     }
 
     return Result;
@@ -394,25 +412,17 @@ void UpdateAndDraw()
     constexpr int WVPBufferSlot = 0;
     DX_ImmediateContext->UpdateSubresource(DX_WVPBuffer, 0, nullptr, &WVP_Trans, sizeof(WVPData), 0);
 
-    // Triangle
     {
-        DX_ImmediateContext->VSSetConstantBuffers(WVPBufferSlot, 1, &DX_WVPBuffer);
-
-        Draw(ShaderColor, Triangle);
-    }
-
-    // Quad
-    {
-        DX_ImmediateContext->PSSetShaderResources(0, 1, &DebugTexture_SRV);
-        DX_ImmediateContext->PSSetSamplers(0, 1, &DebugSamplerState);
+        DX_ImmediateContext->PSSetShaderResources(0, 1, &DebugTexture.SRV);
+        DX_ImmediateContext->PSSetSamplers(0, 1, &DefaultSamplerState);
 
         DX_ImmediateContext->VSSetConstantBuffers(WVPBufferSlot, 1, &DX_WVPBuffer);
 
-        Draw(ShaderTexture, Quad);
+        Draw(ShaderTexture, MeshQuad);
     }
 }
 
-void Draw(ShaderState& InShaderState, VxState& InVxState)
+void Draw(DrawStateT& InShaderState, MeshStateT& InVxState)
 {
     ASSERT(InShaderState.VxInputLayout && InShaderState.VxShader && InShaderState.PxShader);
     DX_ImmediateContext->IASetInputLayout(InShaderState.VxInputLayout);
@@ -437,7 +447,7 @@ void Draw(ShaderState& InShaderState, VxState& InVxState)
 
 void Draw()
 {
-    float ClearColor[4] = { 0.125f, 0.175f, 0.3f, 1.0f };
+    float ClearColor[4] = { NORM_RGB(30, 30, 46), 1.0f};
     float fDepth = 1.0f;
     DX_ImmediateContext->ClearRenderTargetView(DX_RenderTargetView, ClearColor);
     DX_ImmediateContext->ClearDepthStencilView(DX_DepthStencilView, D3D11_CLEAR_DEPTH, fDepth, 0);

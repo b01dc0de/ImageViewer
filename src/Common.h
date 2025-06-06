@@ -24,6 +24,9 @@ extern HWND hWindow;
 extern UINT WinResX;
 extern UINT WinResY;
 
+#define CONFIG_DEBUG() (_DEBUG)
+#define CONFIG_RELEASE() !CONFIG_DEBUG()
+
 #if UNICODE
     #define APPNAME() (L"ImageViewer")
 #else
@@ -31,7 +34,11 @@ extern UINT WinResY;
 #endif
 
 #define ARRAY_SIZE(Arr) (sizeof((Arr)) / sizeof((Arr)[0]))
-#define ASSERT(Exp) { if (!(Exp)) { Outf("[error] ASSERT failed: %s\n", ##Exp); DebugBreak();} }
+#if CONFIG_DEBUG()
+    #define ASSERT(Exp) { if (!(Exp)) { Outf("[error] ASSERT failed: %s\n", ##Exp); DebugBreak();} }
+#else
+    #define ASSERT(Exp) (void)0;
+#endif // CONFIG_DEBUG()
 
 // ImageViewer headers
 #include "Math.h"
