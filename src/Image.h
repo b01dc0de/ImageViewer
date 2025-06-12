@@ -46,3 +46,4 @@ void GetDebugImage(ImageT& OutImage);
 #include "ImageBitmap.h"
 
 #endif // IMAGE_H
+

@@ -17,7 +17,7 @@ ID3D11Texture2D* DX_DepthStencil = nullptr;
 ID3D11DepthStencilView* DX_DepthStencilView = nullptr;
 ID3D11BlendState* DX_BlendState = nullptr;
 
-ID3D11SamplerState* DefaultSamplerState = nullptr;
+ID3D11SamplerState* DX_DefaultSamplerState = nullptr;
 
 ID3D11Buffer* DX_WVPBuffer = nullptr;
 
@@ -214,7 +214,7 @@ void Graphics::Draw()
 
     {
         DX_ImmediateContext->PSSetShaderResources(0, 1, &ActiveTexture.SRV);
-        DX_ImmediateContext->PSSetSamplers(0, 1, &DefaultSamplerState);
+        DX_ImmediateContext->PSSetSamplers(0, 1, &DX_DefaultSamplerState);
 
         DX_ImmediateContext->VSSetConstantBuffers(WVPBufferSlot, 1, &DX_WVPBuffer);
 
@@ -344,6 +344,32 @@ int Graphics::Init()
     Viewport_Desc.TopLeftY = 0;
     DX_ImmediateContext->RSSetViewports(1, &Viewport_Desc);
 
+    // WorldViewProj CBuffer
+    {
+        D3D11_BUFFER_DESC WVPBufferDesc = {};
+        WVPBufferDesc.ByteWidth = sizeof(WVPData);
+        WVPBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+        WVPBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+        WVPBufferDesc.CPUAccessFlags = 0;
+        DXCHECK(DX_Device->CreateBuffer(&WVPBufferDesc, nullptr, &DX_WVPBuffer));
+    }
+
+    // Default sampler state
+    {
+        D3D11_TEXTURE_ADDRESS_MODE AddressMode = D3D11_TEXTURE_ADDRESS_WRAP;
+        D3D11_SAMPLER_DESC DefaultSamplerDesc = {};
+        DefaultSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+        DefaultSamplerDesc.AddressU = AddressMode;
+        DefaultSamplerDesc.AddressV = AddressMode;
+        DefaultSamplerDesc.AddressW = AddressMode;
+        DefaultSamplerDesc.MipLODBias = 0.0f;
+        DefaultSamplerDesc.MaxAnisotropy = 0;
+        DefaultSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+        DefaultSamplerDesc.MinLOD = 0;
+        DefaultSamplerDesc.MaxLOD = 0;
+        DXCHECK(DX_Device->CreateSamplerState(&DefaultSamplerDesc, &DX_DefaultSamplerState));
+    }
+
     // Shader pipeline state
     {
         LPCWSTR ShaderFileName = L"src/hlsl/BaseShader.hlsl";
@@ -385,16 +411,6 @@ int Graphics::Init()
         }
     }
 
-    // WorldViewProj CBuffer
-    {
-        D3D11_BUFFER_DESC WVPBufferDesc = {};
-        WVPBufferDesc.ByteWidth = sizeof(WVPData);
-        WVPBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-        WVPBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-        WVPBufferDesc.CPUAccessFlags = 0;
-        DXCHECK(DX_Device->CreateBuffer(&WVPBufferDesc, nullptr, &DX_WVPBuffer));
-    }
-
     // Mesh Data
     {
         VertexTexture Vertices_Quad[]
@@ -429,27 +445,29 @@ int Graphics::Init()
         delete[] BMPImage.PixelBuffer;
     }
 
-    // Default sampler state
-    {
-        D3D11_TEXTURE_ADDRESS_MODE AddressMode = D3D11_TEXTURE_ADDRESS_WRAP;
-        D3D11_SAMPLER_DESC DefaultSamplerDesc = {};
-        DefaultSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
-        DefaultSamplerDesc.AddressU = AddressMode;
-        DefaultSamplerDesc.AddressV = AddressMode;
-        DefaultSamplerDesc.AddressW = AddressMode;
-        DefaultSamplerDesc.MipLODBias = 0.0f;
-        DefaultSamplerDesc.MaxAnisotropy = 0;
-        DefaultSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-        DefaultSamplerDesc.MinLOD = 0;
-        DefaultSamplerDesc.MaxLOD = 0;
-        DXCHECK(DX_Device->CreateSamplerState(&DefaultSamplerDesc, &DefaultSamplerState));
-    }
-
     return Result;
 }
 
 void Graphics::Term()
 {
-    // TODO: Release DX/COM refs!
+    SafeRelease(ShaderColor);
+    SafeRelease(ShaderTexture);
+    SafeRelease(MeshQuad);
+    SafeRelease(DebugTexture);
+
+    SafeRelease(DX_WVPBuffer);
+    SafeRelease(DX_DefaultSamplerState);
+
+    SafeRelease(DX_RasterizerState);
+    SafeRelease(DX_BlendState);
+    SafeRelease(DX_DepthStencilView);
+    SafeRelease(DX_DepthStencil);
+    SafeRelease(DX_RenderTargetView);
+    SafeRelease(DX_BackBuffer);
+
+    SafeRelease(DX_SwapChain);
+    SafeRelease(DX_ImmediateContext);
+    SafeRelease(DX_Factory);
+    SafeRelease(DX_Device);
 }
 

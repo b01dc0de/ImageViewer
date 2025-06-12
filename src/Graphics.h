@@ -65,11 +65,29 @@ void Term();
 
 }
 
-inline void SafeRelease(IUnknown*& Ptr)
+inline void SafeRelease(IUnknown* Ptr)
 {
-    if (Ptr) { Ptr->Release(); Ptr = nullptr; }
+    if (Ptr) { Ptr->Release(); /*Ptr = nullptr;*/ }
 }
 
+inline void SafeRelease(MeshStateT& State)
+{
+    SafeRelease(State.VxBuffer);
+    SafeRelease(State.IxBuffer);
+}
+
+inline void SafeRelease(DrawStateT& State)
+{
+    SafeRelease(State.VxInputLayout);
+    SafeRelease(State.VxShader);
+    SafeRelease(State.PxShader);
+}
+
+inline void SafeRelease(TextureStateT& State)
+{
+    SafeRelease(State.Tex2D);
+    SafeRelease(State.SRV);
+}
 
 #endif // GRAPHICS_DX11_H
 

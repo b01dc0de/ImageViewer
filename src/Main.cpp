@@ -99,6 +99,31 @@ HWND InitWindow(HINSTANCE hInstance, int Width, int Height)
 	return NewWindow;
 }
 
+void QueryFilesInDirectory()
+{
+	Array<WIN32_FIND_DATAA> FileList;
+	WIN32_FIND_DATAA FoundFile;
+    HANDLE SearchHandle = FindFirstFileA("Assets\\*", &FoundFile);
+
+	bool bDone = !SearchHandle;
+	while (!bDone)
+	{
+		if (!(FoundFile.cFileName[0] == '.' && FoundFile.cFileName[1] == '\0') &&
+            !(FoundFile.cFileName[0] == '.' && FoundFile.cFileName[1] == '.' && FoundFile.cFileName[2] == '\0'))
+		{
+			FileList.Add(FoundFile);
+		}
+		bDone = !FindNextFileA(SearchHandle, &FoundFile);
+	}
+	FindClose(SearchHandle);
+
+    Outf("QueryFilesInDirectory: Found %d files\n", FileList.Num);
+    for (int Idx = 0; Idx < FileList.Num; Idx++)
+    {
+        Outf("[%d]: %s\n", Idx, FileList[Idx].cFileName);
+    }
+}
+
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, PSTR CmdLine, int WndShow)
 {
 	(void)hPrevInst;
@@ -108,6 +133,8 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, PSTR CmdLine, int WndSh
 	if (HWND hWnd = InitWindow(hInst, WinResX, WinResY))
 	{
 		hWindow = hWnd;
+
+		QueryFilesInDirectory();
 
 		HRESULT Result = Graphics::Init();
 		if (Result != S_OK) { DebugBreak(); }

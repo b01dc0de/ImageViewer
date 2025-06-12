@@ -1,12 +1,14 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-// C++ Std Lib
-#include <cstdio>
-#include <vector>
+// C/C++ std lib 
+#include <stdio.h>
+#include <stdlib.h>
+
 // Win32
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+
 // DX11
 #include <d3d11.h>
 #include <d3dcompiler.h>
