@@ -37,6 +37,7 @@ extern float WinAspectRatio;
 #endif // CONFIG_DEBUG()
 
 // ImageViewer headers
+#include "Image.h"
 #include "Math.h"
 #include "Utils.h"
 

@@ -50,7 +50,7 @@ struct TextureStateT
     ID3D11Texture2D* Tex2D;
     ID3D11ShaderResourceView* SRV;
 
-    static TextureStateT Init(Image32& Image);
+    static TextureStateT Init(ImageT& Image);
 };
 
 int CompileShaderHelper(LPCWSTR SourceFileName, LPCSTR EntryPointFunction, LPCSTR Profile, ID3DBlob** ShaderBlob, const D3D_SHADER_MACRO* Defines = nullptr);

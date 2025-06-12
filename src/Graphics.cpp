@@ -127,7 +127,7 @@ DrawStateT DrawStateT::Init(LPCWSTR ShaderFileName, const D3D_SHADER_MACRO* Defi
     return Result;
 }
 
-TextureStateT TextureStateT::Init(Image32& Image)
+TextureStateT TextureStateT::Init(ImageT& Image)
 {
     ASSERT(Image.Width && Image.Height && Image.PxCount && Image.PxBytes && Image.PixelBuffer);
 
@@ -421,8 +421,8 @@ int Graphics::Init()
 
     // DebugTexture
     {
-        Image32 BMPImage = {};
-        GetDebugBMP(BMPImage);
+        ImageT BMPImage = {};
+        GetDebugImage(BMPImage);
 
         DebugTexture = TextureStateT::Init(BMPImage);
 

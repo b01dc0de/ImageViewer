@@ -128,6 +128,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Graphics.cpp" />
+    <ClCompile Include="src\Image.cpp" />
+    <ClCompile Include="src\ImageBitmap.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Math.cpp" />
     <ClCompile Include="src\Utils.cpp" />
@@ -135,6 +137,8 @@
   <ItemGroup>
     <ClInclude Include="src\Common.h" />
     <ClInclude Include="src\Graphics.h" />
+    <ClInclude Include="src\Image.h" />
+    <ClInclude Include="src\ImageBitmap.h" />
     <ClInclude Include="src\Math.h" />
     <ClInclude Include="src\Utils.h" />
   </ItemGroup>
