@@ -39,6 +39,10 @@ extern float WinAspectRatio;
 #endif // CONFIG_DEBUG()
 
 // ImageViewer headers
+// Platform
+#include "Win32_Viewer.h"
+#include "DX11_Graphics.h"
+// Common
 #include "Image.h"
 #include "Math.h"
 #include "Utils.h"

@@ -1,4 +1,4 @@
-#include "Graphics.h"
+#include "Common.h" // Includes DX11_Graphics.h
 
 #define DXCHECK(Result) if (FAILED(Result)) { return -1; }
 
@@ -470,4 +470,3 @@ void Graphics::Term()
     SafeRelease(DX_Factory);
     SafeRelease(DX_Device);
 }
-

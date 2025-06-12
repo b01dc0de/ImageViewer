@@ -1,7 +1,8 @@
-#ifndef GRAPHICS_DX11_H
-#define GRAPHICS_DX11_H
+#ifndef DX11_GRAPHICS_H
+#define DX11_GRAPHICS_H
 
-#include "Common.h"
+#include "Image.h"
+#include "Math.h"
 
 struct VertexColor
 {
@@ -89,5 +90,5 @@ inline void SafeRelease(TextureStateT& State)
     SafeRelease(State.SRV);
 }
 
-#endif // GRAPHICS_DX11_H
+#endif // DX11_GRAPHICS_H
 

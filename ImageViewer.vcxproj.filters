@@ -9,9 +9,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Graphics.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\Main.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -27,11 +24,14 @@
     <ClCompile Include="src\ImageBitmap.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\DX11_Graphics.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Win32_Viewer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Graphics.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\Math.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -45,6 +45,12 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\ImageBitmap.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DX11_Graphics.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Win32_Viewer.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

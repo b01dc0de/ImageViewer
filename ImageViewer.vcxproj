@@ -127,20 +127,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\Graphics.cpp" />
+    <ClCompile Include="src\DX11_Graphics.cpp" />
     <ClCompile Include="src\Image.cpp" />
     <ClCompile Include="src\ImageBitmap.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Math.cpp" />
     <ClCompile Include="src\Utils.cpp" />
+    <ClCompile Include="src\Win32_Viewer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Common.h" />
-    <ClInclude Include="src\Graphics.h" />
+    <ClInclude Include="src\DX11_Graphics.h" />
     <ClInclude Include="src\Image.h" />
     <ClInclude Include="src\ImageBitmap.h" />
     <ClInclude Include="src\Math.h" />
     <ClInclude Include="src\Utils.h" />
+    <ClInclude Include="src\Win32_Viewer.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\hlsl\BaseShader.hlsl">
