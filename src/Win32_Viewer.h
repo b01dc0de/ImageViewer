@@ -10,9 +10,8 @@ struct ImageViewer
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 int WindowMsgLoop(HWND hWindow);
-void Win32_Init();
-HWND InitWindow(HINSTANCE hInstance, int Width, int Height);
-void QueryFilesInDirectory();
+HWND Win32_Init(HINSTANCE hInstance, int Width, int Height);
+void LoadImagesInDirectory();
 
 #endif // WIN32_VIEWER_H
 

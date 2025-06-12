@@ -18,28 +18,6 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, PSTR CmdLine, int WndSh
 	ImageViewer::Run();
 	ImageViewer::Term();
 
-	Win32_Init();
-	if (HWND hWnd = InitWindow(hInst, WinResX, WinResY))
-	{
-		hWindow = hWnd;
-
-		QueryFilesInDirectory();
-
-		HRESULT Result = Graphics::Init();
-		if (Result != S_OK) { DebugBreak(); }
-
-		bRunning = Result == S_OK;
-		ShowWindow(hWindow, SW_SHOWMAXIMIZED);
-		while (bRunning)
-		{
-			WindowMsgLoop(hWindow);
-			UpdateWindow(hWindow);
-			Graphics::Draw();
-		}
-
-		Graphics::Term();
-	}
-
 	return 0;
 }
 

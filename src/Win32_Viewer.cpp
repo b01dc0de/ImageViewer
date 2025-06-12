@@ -4,6 +4,7 @@ struct ViewerState
     bool bInit = false;
 
     Array<ImageT> LoadedImages{};
+	Array<TextureStateT> LoadedTextures{};
     size_t CurrIdx = 0;
 };
 
@@ -17,27 +18,30 @@ void ImageViewer::Run()
         {
             WindowMsgLoop(hWindow);
             UpdateWindow(hWindow);
-            Graphics::Draw();
+			ViewerDrawParameters Params = {
+				State.CurrIdx < State.LoadedTextures.Num ? &State.LoadedTextures[State.CurrIdx] : nullptr
+			};
+            Graphics::Draw(Params);
         }
     }
 }
 
 void ImageViewer::Init(HINSTANCE hInst, PSTR CmdLine)
 {
-	Win32_Init();
-	if (HWND hWnd = InitWindow(hInst, WinResX, WinResY))
+	if (HWND hWnd = Win32_Init(hInst, WinResX, WinResY))
 	{
 		hWindow = hWnd;
-
-		QueryFilesInDirectory();
 
 		HRESULT Result = Graphics::Init();
 		if (Result != S_OK) { DebugBreak(); }
 
 		bRunning = Result == S_OK;
 		ShowWindow(hWindow, SW_SHOWMAXIMIZED);
-	}
 
+		LoadImagesInDirectory();
+
+		State.bInit = true;
+	}
 }
 
 void ImageViewer::Term()
@@ -66,6 +70,14 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 				bRunning = false;
 			}
+			else if (VK_LEFT == wParam)
+			{
+				State.CurrIdx = (State.CurrIdx + 1) % State.LoadedTextures.Num;
+			}
+			else if (VK_RIGHT == wParam)
+			{
+				State.CurrIdx = (State.CurrIdx + State.LoadedTextures.Num - 1) % State.LoadedTextures.Num;
+			}
 		} break;
 		case WM_CLOSE:
 		{
@@ -93,7 +105,7 @@ int WindowMsgLoop(HWND hWindow)
 	return MsgCount;
 }
 
-void Win32_Init()
+HWND Win32_Init(HINSTANCE hInstance, int Width, int Height)
 {
 	RECT WorkArea{};
 	SystemParametersInfoA(SPI_GETWORKAREA, 0, &WorkArea, 0);
@@ -102,10 +114,7 @@ void Win32_Init()
 	WinResY = WorkArea.bottom - WorkArea.top;
 	ASSERT(WinResX && WinResY);
 	WinAspectRatio = (float)WinResX / (float)WinResY;
-}
 
-HWND InitWindow(HINSTANCE hInstance, int Width, int Height)
-{
 	WNDCLASSEXA WndClass = {};
 	WndClass.cbSize = sizeof(WNDCLASSEXA);
 	WndClass.style = CS_GLOBALCLASS | CS_HREDRAW | CS_VREDRAW;
@@ -137,11 +146,27 @@ HWND InitWindow(HINSTANCE hInstance, int Width, int Height)
 	return NewWindow;
 }
 
-void QueryFilesInDirectory()
+bool IsFileBMP(WIN32_FIND_DATAA& File)
 {
+	for (int Idx = 0; File.cFileName[Idx] && Idx < (MAX_PATH - 4); Idx++)
+	{
+		if (File.cFileName[Idx] == '.')
+		{
+			return File.cFileName[Idx + 1] == 'b' &&
+				File.cFileName[Idx + 2] == 'm' &&
+				File.cFileName[Idx + 3] == 'p' &&
+				File.cFileName[Idx + 4] == '\0';
+		}
+	}
+	return false;
+}
+
+void LoadImagesInDirectory()
+{
+	static constexpr const char* SearchQuery = "Assets\\Test\\*";
 	Array<WIN32_FIND_DATAA> FileList;
 	WIN32_FIND_DATAA FoundFile;
-    HANDLE SearchHandle = FindFirstFileA("Assets\\*", &FoundFile);
+    HANDLE SearchHandle = FindFirstFileA(SearchQuery, &FoundFile);
 
 	bool bDone = !SearchHandle;
 	while (!bDone)
@@ -155,10 +180,34 @@ void QueryFilesInDirectory()
 	}
 	FindClose(SearchHandle);
 
-    Outf("QueryFilesInDirectory: Found %d files\n", FileList.Num);
-    for (int Idx = 0; Idx < FileList.Num; Idx++)
-    {
-        Outf("[%d]: %s\n", Idx, FileList[Idx].cFileName);
-    }
+
+	for (int Idx = 0; Idx < FileList.Num; Idx++)
+	{
+		WIN32_FIND_DATAA& CurrFile = FileList[Idx];
+		if (IsFileBMP(CurrFile))
+		{
+			char FullFileName[MAX_PATH];
+			sprintf_s(FullFileName, MAX_PATH, "Assets/Test/%s", CurrFile.cFileName);
+			ImageT ImageBMP = {};
+			ReadBMP(FullFileName, ImageBMP);
+			State.LoadedImages.Add(ImageBMP);
+
+			if (ImageBMP.PxBytes)
+			{
+				TextureStateT TextureBMP = TextureStateT::Init(ImageBMP);
+				State.LoadedTextures.Add(TextureBMP);
+			}
+		}
+	}
+
+	static constexpr bool bDebugPrint = true;
+	if (bDebugPrint)
+	{
+        Outf("LoadFilesInDirectory: Found %d files (%s)\n", FileList.Num, SearchQuery);
+        for (int Idx = 0; Idx < FileList.Num; Idx++)
+        {
+            Outf("[%d]: %s\n", Idx, FileList[Idx].cFileName);
+        }
+	}
 }
 

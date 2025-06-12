@@ -181,7 +181,7 @@ void Graphics::SubmitDraw(DrawStateT& InShaderState, MeshStateT& InVxState)
     }
 }
 
-void Graphics::Draw()
+void Graphics::Draw(ViewerDrawParameters& Params)
 {
     DX_ImmediateContext->OMSetRenderTargets(1, &DX_RenderTargetView, DX_DepthStencilView);
 
@@ -190,7 +190,7 @@ void Graphics::Draw()
     DX_ImmediateContext->ClearRenderTargetView(DX_RenderTargetView, ClearColor);
     DX_ImmediateContext->ClearDepthStencilView(DX_DepthStencilView, D3D11_CLEAR_DEPTH, ClearDepth, 0);
 
-    TextureStateT& ActiveTexture = DebugTexture;
+    TextureStateT& ActiveTexture = Params.ActiveImage ? *Params.ActiveImage : DebugTexture;
     float ScaleX = 1.0f;
     float ScaleY = 1.0f;
     if (ActiveTexture.AspectRatio < WinAspectRatio)

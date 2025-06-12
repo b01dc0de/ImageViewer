@@ -15,30 +15,32 @@ void GetDebugImage(ImageT& OutImage)
     constexpr Pixel_RGBA32 Green{ 0u, 255u, 0u, 255u };
     constexpr Pixel_RGBA32 Blue{ 0u, 0u, 255u, 255u };
     constexpr Pixel_RGBA32 White{ 255u, 255u, 255u, 255u };
+
+    Pixel_RGBA32* Pixels32 = (Pixel_RGBA32*)OutImage.PixelBuffer;
     for (int PxIdx = 0; PxIdx < OutImage.PxCount; PxIdx++)
     {
         int PxRow = PxIdx / OutImage.Width;
         int PxCol = PxIdx % OutImage.Width;
         if (PxRow == 0 && PxCol == 0)
         {
-            OutImage.PixelBuffer[PxIdx] = Red;
+            Pixels32[PxIdx] = Red;
         }
         else if (PxRow == 0 && PxCol == OutImage.Width - 1)
         {
-            OutImage.PixelBuffer[PxIdx] = Green;
+            Pixels32[PxIdx] = Green;
         }
         else if (PxRow == OutImage.Height - 1 && PxCol == 0)
         {
-            OutImage.PixelBuffer[PxIdx] = Blue;
+            Pixels32[PxIdx] = Blue;
         }
         else if (PxRow == OutImage.Height - 1 && PxCol == OutImage.Width - 1)
         {
-            OutImage.PixelBuffer[PxIdx] = White;
+            Pixels32[PxIdx] = White;
         }
         else
         {
             bool bEvenCell = (PxRow + PxCol) % 2 == 0;
-            OutImage.PixelBuffer[PxIdx] = bEvenCell ? Black : Pink;
+            Pixels32[PxIdx] = bEvenCell ? Black : Pink;
         }
     }
 }

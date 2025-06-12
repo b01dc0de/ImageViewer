@@ -6,7 +6,6 @@ struct BMP
     BMPInfoHeader InfoHeader;
 };
 
-constexpr u16 SupportedBPP = 32;
 constexpr u16 BitmapFileTypeValue = 0x4D42;
 
 void WriteBMP(const char* OutFilename, const ImageT& InImage)
@@ -31,7 +30,7 @@ void WriteBMP(const char* OutFilename, const ImageT& InImage)
     BMP_Data.InfoHeader.Width = (s32)InImage.Width;
     BMP_Data.InfoHeader.Height = -(s32)InImage.Height;
     BMP_Data.InfoHeader.Planes = 1;
-    BMP_Data.InfoHeader.BitsPerPixel = SupportedBPP;
+    BMP_Data.InfoHeader.BitsPerPixel = 32;
     BMP_Data.InfoHeader.Compression = 0;
     BMP_Data.InfoHeader.Unused_ImgSize = PxBytes;
     BMP_Data.InfoHeader.HRes = 0;
@@ -78,26 +77,88 @@ void ReadBMP(const char* InFilename, ImageT& OutImage)
         BMP ReadBMP = {};
         fread_s(&ReadBMP, sizeof(BMP), sizeof(BMP), 1, BMP_File);
 
-        if (SupportedBPP != ReadBMP.InfoHeader.BitsPerPixel) { DebugBreak(); }
-
         size_t BytesRemaining = FileSizeBytes - sizeof(BMP);
         if (BitmapFileTypeValue == ReadBMP.FileHeader.Type)
         {
-            u8* NewPxBuffer = new u8[BytesRemaining];
-            // Extract pixel data into OutImage struct
             OutImage.Width = ReadBMP.InfoHeader.Width;
             OutImage.Height = ReadBMP.InfoHeader.Height > 0 ? ReadBMP.InfoHeader.Height : -ReadBMP.InfoHeader.Height;
             OutImage.PxCount = OutImage.Width * OutImage.Height;
             OutImage.PxBytes = BytesRemaining;
-            OutImage.PixelBuffer = (Pixel_RGBA32*)(NewPxBuffer);
+            OutImage.PixelBuffer = new Pixel_RGBA32[OutImage.PxCount];
 
-            fread_s(OutImage.PixelBuffer, OutImage.PxBytes, OutImage.PxBytes, 1, BMP_File);
+            bool bUpsideDown = ReadBMP.InfoHeader.Height > 0;
 
-            // Unswizzle(?) the pixel data
-            for (unsigned int PxIdx = 0; PxIdx < OutImage.PxCount; PxIdx++)
+            // Extract pixel data into OutImage struct
+            switch (ReadBMP.InfoHeader.BitsPerPixel)
             {
-                Pixel_RGBA32& CurrPx = OutImage.PixelBuffer[PxIdx];
-                CurrPx = Pixel_RGBA32::Swizzle(CurrPx);
+                case 24:
+                {
+                    size_t Stride = OutImage.Width * 3 % 4 == 0 ? OutImage.Width * 3 : (OutImage.Width + 1) * 3;
+                    u8* TmpPxData = new u8[BytesRemaining];
+                    fread_s(TmpPxData, BytesRemaining, BytesRemaining, 1, BMP_File);
+
+                    int PxIdx = 0;
+                    if (bUpsideDown)
+                    {
+                        for (int Row = OutImage.Height - 1; Row >= 0; Row--)
+                        {
+                            for (int Col = 0; Col < OutImage.Width; Col++)
+                            {
+                                u8* ReadPx = TmpPxData + (Row * Stride) + (Col * 3);
+                                Pixel_RGBA32* WritePx = OutImage.PixelBuffer + PxIdx;
+                                *WritePx = { ReadPx[2], ReadPx[1], ReadPx[0], 255 };
+                                PxIdx++;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (int Row = 0; Row < OutImage.Height; Row++)
+                        {
+                            for (int Col = 0; Col < OutImage.Width; Col++)
+                            {
+                                u8* ReadPx = TmpPxData + (Row * Stride) + (Col * 3);
+                                OutImage.PixelBuffer[PxIdx] = { ReadPx[2], ReadPx[1], ReadPx[0], 255 };
+                                PxIdx++;
+                            }
+                        }
+                    }
+
+                    delete[] TmpPxData;
+                } break;
+                case 32:
+                {
+                    u8* TmpPxData = new u8[BytesRemaining];
+                    fread_s(TmpPxData, BytesRemaining, BytesRemaining, 1, BMP_File);
+
+                    int PxIdx = 0;
+                    if (bUpsideDown)
+                    {
+                        for (int Row = OutImage.Height - 1; Row >= 0; Row--)
+                        {
+                            for (int Col = 0; Col < OutImage.Width; Col++)
+                            {
+                                u8* ReadPx = TmpPxData + ((Row * OutImage.Width) + Col) * 4;
+                                Pixel_RGBA32* WritePx = OutImage.PixelBuffer + PxIdx;
+                                *WritePx = Pixel_RGBA32::Swizzle(*(Pixel_RGBA32*)ReadPx);
+                                PxIdx++;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (int Row = 0; Row < OutImage.Height; Row++)
+                        {
+                            for (int Col = 0; Col < OutImage.Width; Col++)
+                            {
+                                u8* ReadPx = TmpPxData + ((Row * OutImage.Width) + Col) * 4;
+                                Pixel_RGBA32* WritePx = OutImage.PixelBuffer + PxIdx;
+                                *WritePx = Pixel_RGBA32::Swizzle(*(Pixel_RGBA32*)ReadPx);
+                                PxIdx++;
+                            }
+                        }
+                    }
+                } break;
             }
         }
 

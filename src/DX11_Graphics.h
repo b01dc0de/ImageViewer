@@ -56,11 +56,16 @@ struct TextureStateT
 
 int CompileShaderHelper(LPCWSTR SourceFileName, LPCSTR EntryPointFunction, LPCSTR Profile, ID3DBlob** ShaderBlob, const D3D_SHADER_MACRO* Defines = nullptr);
 
+struct ViewerDrawParameters
+{
+    TextureStateT* ActiveImage;
+};
+
 namespace Graphics
 {
 
 void SubmitDraw(DrawStateT& InShaderState, MeshStateT& InVxState);
-void Draw();
+void Draw(ViewerDrawParameters& Params);
 int Init();
 void Term();
 

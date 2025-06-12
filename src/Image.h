@@ -5,11 +5,6 @@
 
 #define NORM_RGB(R, G, B) (R)/255.0f, (G)/255.0f, (B)/255.0f
 
-enum struct PixelFormat
-{
-    RGBA32
-};
-
 struct Pixel_RGBA32
 {
     u8 R;
@@ -17,10 +12,6 @@ struct Pixel_RGBA32
     u8 B;
     u8 A;
 
-    u32 SwizzleAsU32()
-    {
-        return u32((A << 24) | (B << 16) | (G << 8) | (R << 0));
-    }
     static Pixel_RGBA32 Swizzle(Pixel_RGBA32 InVal)
     {
         Pixel_RGBA32 Result = {};
