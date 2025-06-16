@@ -40,12 +40,13 @@ extern float WinAspectRatio;
 
 // ImageViewer headers
 // Platform
-#include "Win32_Viewer.h"
 #include "DX11_Graphics.h"
 // Common
 #include "Image.h"
 #include "Math.h"
 #include "Utils.h"
+// Main
+#include "Win32_Viewer.h"
 
 #endif // COMMON_H
 

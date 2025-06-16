@@ -3,6 +3,16 @@
 
 void Outf(const char* Fmt, ...);
 
+struct FileContentsT
+{
+	size_t Size;
+	byte* Contents;
+};
+
+void Release(FileContentsT& FileContents);
+FileContentsT ReadFileContents(const char* InFileName);
+void WriteFileContents(FileContentsT& InFileContents, const char* OutFileName);
+
 template <typename T>
 struct Array
 {

@@ -44,3 +44,11 @@ void GetDebugImage(ImageT& OutImage)
         }
     }
 }
+
+void SafeRelease(ImageT& Image)
+{
+    if (Image.PixelBuffer)
+    {
+        delete[] Image.PixelBuffer;
+    }
+}

@@ -121,8 +121,8 @@ DrawStateT DrawStateT::Init(LPCWSTR ShaderFileName, const D3D_SHADER_MACRO* Defi
         ASSERT(!FAILED(DX_Device->CreatePixelShader(PSCodeBlob->GetBufferPointer(), PSCodeBlob->GetBufferSize(), nullptr, &Result.PxShader)));
         ASSERT(!FAILED(DX_Device->CreateInputLayout(InputLayoutDesc, NumInputElements, VSCodeBlob->GetBufferPointer(), VSCodeBlob->GetBufferSize(), &Result.VxInputLayout)));
     }
-    if (VSCodeBlob) { VSCodeBlob->Release(); }
-    if (PSCodeBlob) { PSCodeBlob->Release(); }
+    SafeRelease(VSCodeBlob);
+    SafeRelease(PSCodeBlob);
 
     return Result;
 }

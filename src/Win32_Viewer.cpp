@@ -1,4 +1,5 @@
 #include "Common.h" // Includes Win32_Viewer.h
+
 struct ViewerState
 {
     bool bInit = false;
@@ -6,6 +7,19 @@ struct ViewerState
     Array<ImageT> LoadedImages{};
 	Array<TextureStateT> LoadedTextures{};
     size_t CurrIdx = 0;
+
+	void Release()
+	{
+		for (int Idx = 0; Idx < LoadedImages.Num; Idx++)
+		{
+			SafeRelease(LoadedImages[Idx]);
+		}
+
+		for (int Idx = 0; Idx < LoadedTextures.Num; Idx++)
+		{
+			SafeRelease(LoadedTextures[Idx]);
+		}
+	}
 };
 
 static ViewerState State;
@@ -46,15 +60,22 @@ void ImageViewer::Init(HINSTANCE hInst, PSTR CmdLine)
 
 void ImageViewer::Term()
 {
+	State.Release();
     Graphics::Term();
 }
-
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT Result = 0;
 	switch (uMsg)
 	{
+        case WM_GETMINMAXINFO:
+        {
+			MINMAXINFO* OutWinInfo = (MINMAXINFO*)lParam;
+			ASSERT(OutWinInfo);
+			OutWinInfo->ptMinTrackSize.x = 100;
+			OutWinInfo->ptMinTrackSize.y = 100;
+        } break;
 		case WM_SIZE:
 		{
 			UINT Width = LOWORD(lParam);
@@ -146,16 +167,25 @@ HWND Win32_Init(HINSTANCE hInstance, int Width, int Height)
 	return NewWindow;
 }
 
-bool IsFileBMP(WIN32_FIND_DATAA& File)
+bool IsFileSupportedImageType(WIN32_FIND_DATAA& File)
 {
+	constexpr const char* SupportedImageTypes[] = { "bmp", "png" };
 	for (int Idx = 0; File.cFileName[Idx] && Idx < (MAX_PATH - 4); Idx++)
 	{
 		if (File.cFileName[Idx] == '.')
 		{
-			return File.cFileName[Idx + 1] == 'b' &&
-				File.cFileName[Idx + 2] == 'm' &&
-				File.cFileName[Idx + 3] == 'p' &&
-				File.cFileName[Idx + 4] == '\0';
+			// TODO: Make robust
+			for (int TypeIdx = 0; TypeIdx < ARRAY_SIZE(SupportedImageTypes); TypeIdx++)
+			{
+				if (File.cFileName[Idx + 1] == SupportedImageTypes[TypeIdx][0] &&
+					File.cFileName[Idx + 2] == SupportedImageTypes[TypeIdx][1] &&
+					File.cFileName[Idx + 3] == SupportedImageTypes[TypeIdx][2] &&
+					File.cFileName[Idx + 4] == '\0')
+				{
+					return true;
+				}
+			}
+			break;
 		}
 	}
 	return false;
@@ -184,7 +214,7 @@ void LoadImagesInDirectory()
 	for (int Idx = 0; Idx < FileList.Num; Idx++)
 	{
 		WIN32_FIND_DATAA& CurrFile = FileList[Idx];
-		if (IsFileBMP(CurrFile))
+		if (IsFileSupportedImageType(CurrFile))
 		{
 			char FullFileName[MAX_PATH];
 			sprintf_s(FullFileName, MAX_PATH, "Assets/Test/%s", CurrFile.cFileName);
@@ -206,7 +236,7 @@ void LoadImagesInDirectory()
         Outf("LoadFilesInDirectory: Found %d files (%s)\n", FileList.Num, SearchQuery);
         for (int Idx = 0; Idx < FileList.Num; Idx++)
         {
-            Outf("[%d]: %s\n", Idx, FileList[Idx].cFileName);
+            Outf("\t[%d]: %s\n", Idx, FileList[Idx].cFileName);
         }
 	}
 }

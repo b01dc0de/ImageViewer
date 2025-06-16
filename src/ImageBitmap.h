@@ -27,8 +27,8 @@ struct BMPInfoHeader
 };
 #pragma pack(pop)
 
-void WriteBMP(const char* OutFilename, const ImageT& InImage);
 void ReadBMP(const char* InFilename, ImageT& OutImage);
+void WriteBMP(const char* OutFilename, const ImageT& InImage);
 
 #endif // IMAGEBITMAP_H
 

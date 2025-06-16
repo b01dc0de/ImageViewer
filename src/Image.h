@@ -33,8 +33,10 @@ struct ImageT
 };
 
 void GetDebugImage(ImageT& OutImage);
+void SafeRelease(ImageT& Image);
 
 #include "ImageBitmap.h"
+#include "ImagePNG.h"
 
 #endif // IMAGE_H
 
