@@ -1,5 +1,5 @@
-#ifndef IMAGEBITMAP_H
-#define IMAGEBITMAP_H
+#ifndef IMAGEBMP_H
+#define IMAGEBMP_H
 
 #pragma pack(push, 1)
 struct BMPFileHeader
@@ -27,8 +27,8 @@ struct BMPInfoHeader
 };
 #pragma pack(pop)
 
-void ReadBMP(const char* InFilename, ImageT& OutImage);
-void WriteBMP(const char* OutFilename, const ImageT& InImage);
+void ReadBMP(const char* InFileName, ImageT& OutImage);
+void WriteBMP(const char* OutFileName, const ImageT& InImage);
 
-#endif // IMAGEBITMAP_H
+#endif // IMAGEBMP_H
 

@@ -11,6 +11,21 @@ void Outf(const char* Fmt, ...)
     OutputDebugStringA(MsgBuffer);
 }
 
+bool MatchStr(const char* A, const char* B)
+{
+    for (size_t Idx = 0;; Idx++)
+    {
+        if (!A[Idx] && !B[Idx])
+        {
+            return true;
+        }
+        if (A[Idx] != B[Idx])
+        {
+            return false;
+        }
+    }
+}
+
 void Release(FileContentsT& FileContents)
 {
     if (FileContents.Contents)
@@ -24,7 +39,7 @@ void Release(FileContentsT& FileContents)
 FileContentsT ReadFileContents(const char* InFileName)
 {
     ASSERT(InFileName);
-    FileContentsT Result = {};
+    FileContentsT Result = { InFileName };
 
     FILE* FileHandle = nullptr;
     fopen_s(&FileHandle, InFileName, "rb");
@@ -52,17 +67,17 @@ FileContentsT ReadFileContents(const char* InFileName)
     return Result;
 }
 
-void WriteFileContents(FileContentsT& InFileContents, const char* OutFileName)
-{
-    ASSERT(InFileContents.Size && InFileContents.Contents && OutFileName);
-
-    FILE* FileHandle = nullptr;
-    fopen_s(&FileHandle, OutFileName, "wb");
-
-    if (nullptr != FileHandle)
-    {
-        fwrite(InFileContents.Contents, InFileContents.Size, 1, FileHandle);
-
-        fclose(FileHandle);
-    }
-}
+//void WriteFileContents(FileContentsT& InFileContents, const char* OutFileName)
+//{
+//    ASSERT(InFileContents.Size && InFileContents.Contents && OutFileName);
+//
+//    FILE* FileHandle = nullptr;
+//    fopen_s(&FileHandle, OutFileName, "wb");
+//
+//    if (nullptr != FileHandle)
+//    {
+//        fwrite(InFileContents.Contents, InFileContents.Size, 1, FileHandle);
+//
+//        fclose(FileHandle);
+//    }
+//}

@@ -35,7 +35,16 @@ struct ImageT
 void GetDebugImage(ImageT& OutImage);
 void SafeRelease(ImageT& Image);
 
-#include "ImageBitmap.h"
+enum struct ImageFileType
+{
+    Invalid,
+    BMP,
+    PNG
+};
+
+ImageFileType GetImageFileType(const char* FileName);
+
+#include "ImageBMP.h"
 #include "ImagePNG.h"
 
 #endif // IMAGE_H

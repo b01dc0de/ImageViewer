@@ -8,7 +8,7 @@ UINT WinResX = 0;
 UINT WinResY = 0;
 float WinAspectRatio = 0.0f;
 
-int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, PSTR CmdLine, int WndShow)
+int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR CmdLine, int WndShow)
 {
 	(void)hPrevInst;
 	(void)CmdLine;

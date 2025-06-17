@@ -21,7 +21,7 @@
     <ClCompile Include="src\Image.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\ImageBitmap.cpp">
+    <ClCompile Include="src\ImageBMP.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\DX11_Graphics.cpp">
@@ -47,7 +47,7 @@
     <ClInclude Include="src\Image.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\ImageBitmap.h">
+    <ClInclude Include="src\ImageBMP.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\DX11_Graphics.h">

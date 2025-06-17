@@ -40,22 +40,21 @@ void ImageViewer::Run()
     }
 }
 
-void ImageViewer::Init(HINSTANCE hInst, PSTR CmdLine)
+void ImageViewer::Init(HINSTANCE hInst, LPSTR CmdLine)
 {
 	if (HWND hWnd = Win32_Init(hInst, WinResX, WinResY))
 	{
 		hWindow = hWnd;
 
-		HRESULT Result = Graphics::Init();
-		if (Result != S_OK) { DebugBreak(); }
+        ASSERT(Graphics::Init() == S_OK);
 
-		bRunning = Result == S_OK;
 		ShowWindow(hWindow, SW_SHOWMAXIMIZED);
 
 		LoadImagesInDirectory();
 
 		State.bInit = true;
 	}
+    bRunning = State.bInit;
 }
 
 void ImageViewer::Term()
@@ -167,33 +166,10 @@ HWND Win32_Init(HINSTANCE hInstance, int Width, int Height)
 	return NewWindow;
 }
 
-bool IsFileSupportedImageType(WIN32_FIND_DATAA& File)
-{
-	constexpr const char* SupportedImageTypes[] = { "bmp", "png" };
-	for (int Idx = 0; File.cFileName[Idx] && Idx < (MAX_PATH - 4); Idx++)
-	{
-		if (File.cFileName[Idx] == '.')
-		{
-			// TODO: Make robust
-			for (int TypeIdx = 0; TypeIdx < ARRAY_SIZE(SupportedImageTypes); TypeIdx++)
-			{
-				if (File.cFileName[Idx + 1] == SupportedImageTypes[TypeIdx][0] &&
-					File.cFileName[Idx + 2] == SupportedImageTypes[TypeIdx][1] &&
-					File.cFileName[Idx + 3] == SupportedImageTypes[TypeIdx][2] &&
-					File.cFileName[Idx + 4] == '\0')
-				{
-					return true;
-				}
-			}
-			break;
-		}
-	}
-	return false;
-}
-
 void LoadImagesInDirectory()
 {
-	static constexpr const char* SearchQuery = "Assets\\Test\\*";
+	//static constexpr const char* SearchQuery = "Assets\\Test\\*";
+	static constexpr const char* SearchQuery = "Assets\\Test\\PNG\\*";
 	Array<WIN32_FIND_DATAA> FileList;
 	WIN32_FIND_DATAA FoundFile;
     HANDLE SearchHandle = FindFirstFileA(SearchQuery, &FoundFile);
@@ -201,8 +177,7 @@ void LoadImagesInDirectory()
 	bool bDone = !SearchHandle;
 	while (!bDone)
 	{
-		if (!(FoundFile.cFileName[0] == '.' && FoundFile.cFileName[1] == '\0') &&
-            !(FoundFile.cFileName[0] == '.' && FoundFile.cFileName[1] == '.' && FoundFile.cFileName[2] == '\0'))
+		if (!MatchStr(".", FoundFile.cFileName) && !MatchStr("..", FoundFile.cFileName))
 		{
 			FileList.Add(FoundFile);
 		}
@@ -210,24 +185,36 @@ void LoadImagesInDirectory()
 	}
 	FindClose(SearchHandle);
 
-
 	for (int Idx = 0; Idx < FileList.Num; Idx++)
 	{
 		WIN32_FIND_DATAA& CurrFile = FileList[Idx];
-		if (IsFileSupportedImageType(CurrFile))
+		ImageFileType Type = GetImageFileType(CurrFile.cFileName);
+		ImageT NewImage = {};
+        char FullFileName[MAX_PATH];
+		// TODO: Make robust
+        //sprintf_s(FullFileName, MAX_PATH, "Assets/Test/%s", CurrFile.cFileName);
+        sprintf_s(FullFileName, MAX_PATH, "Assets/Test/PNG/%s", CurrFile.cFileName);
+		switch (Type)
 		{
-			char FullFileName[MAX_PATH];
-			sprintf_s(FullFileName, MAX_PATH, "Assets/Test/%s", CurrFile.cFileName);
-			ImageT ImageBMP = {};
-			ReadBMP(FullFileName, ImageBMP);
-			State.LoadedImages.Add(ImageBMP);
-
-			if (ImageBMP.PxBytes)
+			case ImageFileType::Invalid:
 			{
-				TextureStateT TextureBMP = TextureStateT::Init(ImageBMP);
-				State.LoadedTextures.Add(TextureBMP);
-			}
+			} break;
+			case ImageFileType::BMP:
+			{
+                ReadBMP(FullFileName, NewImage);
+            } break;
+			case ImageFileType::PNG:
+			{
+				ReadPNG(FullFileName, NewImage);
+			} break;
 		}
+
+        if (NewImage.PxBytes)
+        {
+            TextureStateT NewTexture = TextureStateT::Init(NewImage);
+            State.LoadedImages.Add(NewImage);
+            State.LoadedTextures.Add(NewTexture);
+        }
 	}
 
 	static constexpr bool bDebugPrint = true;

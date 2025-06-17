@@ -82,7 +82,7 @@
   <ItemGroup>
     <ClCompile Include="src\DX11_Graphics.cpp" />
     <ClCompile Include="src\Image.cpp" />
-    <ClCompile Include="src\ImageBitmap.cpp" />
+    <ClCompile Include="src\ImageBMP.cpp" />
     <ClCompile Include="src\ImagePNG.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Math.cpp" />
@@ -93,7 +93,7 @@
     <ClInclude Include="src\Common.h" />
     <ClInclude Include="src\DX11_Graphics.h" />
     <ClInclude Include="src\Image.h" />
-    <ClInclude Include="src\ImageBitmap.h" />
+    <ClInclude Include="src\ImageBMP.h" />
     <ClInclude Include="src\ImagePNG.h" />
     <ClInclude Include="src\Math.h" />
     <ClInclude Include="src\Utils.h" />

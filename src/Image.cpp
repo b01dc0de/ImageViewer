@@ -52,3 +52,33 @@ void SafeRelease(ImageT& Image)
         delete[] Image.PixelBuffer;
     }
 }
+
+ImageFileType GetImageFileType(const char* FileName)
+{
+    struct ExtTypePair
+    {
+        const char* Extension;
+        ImageFileType Type;
+    };
+    constexpr ExtTypePair SupportedFileTypes[] =
+    {
+        { "bmp", ImageFileType::BMP },
+        { "png", ImageFileType::PNG },
+    };
+
+	for (int Idx = 0; FileName[Idx] && Idx < (MAX_PATH - 4); Idx++)
+	{
+		if (FileName[Idx] == '.')
+		{
+			for (int TypeIdx = 0; TypeIdx < ARRAY_SIZE(SupportedFileTypes); TypeIdx++)
+			{
+                if (MatchStr(SupportedFileTypes[TypeIdx].Extension, FileName + Idx + 1))
+                {
+                    return SupportedFileTypes[TypeIdx].Type;
+                }
+			}
+			break;
+		}
+	}
+	return ImageFileType::Invalid;
+}
