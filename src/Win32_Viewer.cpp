@@ -127,6 +127,10 @@ int WindowMsgLoop(HWND hWindow)
 
 HWND Win32_Init(HINSTANCE hInstance, int Width, int Height)
 {
+#if CONFIG_DEBUG()
+	_CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+#endif // CONFIG_DEBUG()
+
 	RECT WorkArea{};
 	SystemParametersInfoA(SPI_GETWORKAREA, 0, &WorkArea, 0);
 
@@ -163,13 +167,21 @@ HWND Win32_Init(HINSTANCE hInstance, int Width, int Height)
 		nullptr
 	);
 
+
 	return NewWindow;
 }
 
 void LoadImagesInDirectory()
 {
-	//static constexpr const char* SearchQuery = "Assets\\Test\\*";
-	static constexpr const char* SearchQuery = "Assets\\Test\\PNG\\*";
+	//static constexpr const char* DirectoryToLoad = "Assets/Test";
+	static constexpr const char* DirectoryToLoad = "Assets/Test/PNG";
+	char SearchQuery[MAX_PATH];
+	sprintf_s(SearchQuery, MAX_PATH, "%s\\*", DirectoryToLoad);
+	for (int Idx = 0; Idx < MAX_PATH && SearchQuery[Idx]; Idx++)
+	{
+		if (SearchQuery[Idx] == '/') { SearchQuery[Idx] = '\\'; }
+	}
+
 	Array<WIN32_FIND_DATAA> FileList;
 	WIN32_FIND_DATAA FoundFile;
     HANDLE SearchHandle = FindFirstFileA(SearchQuery, &FoundFile);
@@ -191,9 +203,7 @@ void LoadImagesInDirectory()
 		ImageFileType Type = GetImageFileType(CurrFile.cFileName);
 		ImageT NewImage = {};
         char FullFileName[MAX_PATH];
-		// TODO: Make robust
-        //sprintf_s(FullFileName, MAX_PATH, "Assets/Test/%s", CurrFile.cFileName);
-        sprintf_s(FullFileName, MAX_PATH, "Assets/Test/PNG/%s", CurrFile.cFileName);
+        sprintf_s(FullFileName, MAX_PATH, "%s/%s", DirectoryToLoad, CurrFile.cFileName);
 		switch (Type)
 		{
 			case ImageFileType::Invalid:
@@ -217,7 +227,7 @@ void LoadImagesInDirectory()
         }
 	}
 
-	static constexpr bool bDebugPrint = true;
+	static constexpr bool bDebugPrint = false;
 	if (bDebugPrint)
 	{
         Outf("LoadFilesInDirectory: Found %d files (%s)\n", FileList.Num, SearchQuery);

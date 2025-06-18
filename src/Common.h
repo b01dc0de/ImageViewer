@@ -1,6 +1,9 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#define CONFIG_DEBUG() (_DEBUG)
+#define CONFIG_RELEASE() !CONFIG_DEBUG()
+
 // C/C++ std lib 
 #include <stdint.h>
 #include <stdio.h>
@@ -9,6 +12,11 @@
 // Win32
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#if CONFIG_DEBUG()
+// Memory leak detection:
+    #define _CRTDBG_MAP_ALLOC
+    #include <crtdbg.h>
+#endif // CONFIG_DEBUG()
 
 // DX11
 #include <d3d11.h>
@@ -35,9 +43,6 @@ extern HWND hWindow;
 extern UINT WinResX;
 extern UINT WinResY;
 extern float WinAspectRatio;
-
-#define CONFIG_DEBUG() (_DEBUG)
-#define CONFIG_RELEASE() !CONFIG_DEBUG()
 
 #define APPNAME() ("ImageViewer")
 #define ARRAY_SIZE(Arr) (sizeof((Arr)) / sizeof((Arr)[0]))

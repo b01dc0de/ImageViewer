@@ -26,7 +26,7 @@ struct FileReaderT
 	{
 		return ReadIdx >= File.Size;
 	}
-	void ReadData(byte* OutData, size_t NumBytes)
+	void ReadData(void* OutData, size_t NumBytes)
 	{
 		ASSERT(OutData && ReadIdx + NumBytes <= File.Size);
 		if (OutData && ReadIdx + NumBytes <= File.Size)
@@ -105,21 +105,30 @@ struct Array
 		Data = nullptr;
 	}
 
-	void Grow()
+	void Grow(size_t NewCapacity)
 	{
 		size_t OldCapacity = Capacity;
 		T* OldData = Data;
 
-		Capacity = (size_t)(Capacity * GrowthFactor);
+		ASSERT(NewCapacity > OldCapacity);
+
+		Capacity = NewCapacity;
 		Data = new T[Capacity];
 
 		memcpy(Data, OldData, sizeof(T) * Num);
 		delete[] OldData;
 	}
+	void Add(T* Items, size_t NumItems)
+	{
+		size_t NewNum = Num + NumItems;
+        if (NewNum >= Capacity) { Grow(NewNum); }
 
+		memcpy(Data + Num, Items, NumItems * sizeof(T));
+		Num = NewNum;
+	}
 	void Add(T& Item)
 	{
-		if (Num >= Capacity) { Grow(); }
+		if (Num >= Capacity) { Grow((size_t)(Capacity * GrowthFactor)); }
 
 		Data[Num++] = Item;
 	}
