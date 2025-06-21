@@ -42,13 +42,13 @@ void ImageViewer::Run()
 
 void ImageViewer::Init(HINSTANCE hInst, LPSTR CmdLine)
 {
-	if (HWND hWnd = Win32_Init(hInst, WinResX, WinResY))
+	if (HWND hWnd = Win32_Init(hInst))
 	{
 		hWindow = hWnd;
 
         ASSERT(Graphics::Init() == S_OK);
 
-		ShowWindow(hWindow, SW_SHOWMAXIMIZED);
+		ShowWindow(hWindow, SW_SHOWNORMAL);
 
 		LoadImagesInDirectory();
 
@@ -125,7 +125,7 @@ int WindowMsgLoop(HWND hWindow)
 	return MsgCount;
 }
 
-HWND Win32_Init(HINSTANCE hInstance, int Width, int Height)
+HWND Win32_Init(HINSTANCE hInstance)
 {
 #if CONFIG_DEBUG()
 	_CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
@@ -148,7 +148,7 @@ HWND Win32_Init(HINSTANCE hInstance, int Width, int Height)
 
 	RegisterClassExA(&WndClass);
 
-	RECT WndRect = { 0, 0, (LONG)Width, (LONG)Height};
+	RECT WndRect = { 0, 0, (LONG)WinResX, (LONG)WinResY};
 	UINT WndStyle = WS_CAPTION | WS_OVERLAPPEDWINDOW;
 	UINT WndExStyle = 0;
 
@@ -167,7 +167,6 @@ HWND Win32_Init(HINSTANCE hInstance, int Width, int Height)
 		nullptr
 	);
 
-
 	return NewWindow;
 }
 
@@ -175,7 +174,7 @@ void LoadImagesInDirectory()
 {
 	//static constexpr const char* DirectoryToLoad = "Assets/Test";
 	static constexpr const char* DirectoryToLoad = "Assets/Test/PNG";
-	char SearchQuery[MAX_PATH];
+	char SearchQuery[MAX_PATH] = {};
 	sprintf_s(SearchQuery, MAX_PATH, "%s\\*", DirectoryToLoad);
 	for (int Idx = 0; Idx < MAX_PATH && SearchQuery[Idx]; Idx++)
 	{

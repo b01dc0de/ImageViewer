@@ -78,9 +78,9 @@ struct PNG
     {
         PNGChunk NextChunk = {};
         NextChunk.Length = SwapEndian(Reader.ReadU32());
-        NextChunk.Type = SwapEndian(Reader.ReadU32());
+        NextChunk.Type = Reader.ReadU32();
         ASSERT(!bIEND);
-        switch (NextChunk.Type)
+        switch (SwapEndian(NextChunk.Type))
         {
             case 'IHDR':
             {
@@ -143,7 +143,7 @@ struct PNG
         }
         NumChunks++;
     }
-    void Parse(FileContentsT& FileContents)
+    void Parse(FileContentsT& FileContents, ImageT& OutImage)
     {
         ASSERT(FileContents.Size && FileContents.Contents);
 
@@ -204,7 +204,7 @@ void ReadPNG(const char* InFileName, ImageT& OutImage)
     if (FilePNG.Size && FilePNG.Contents)
     {
         PNG ThePNG = {};
-        ThePNG.Parse(FilePNG);
+        ThePNG.Parse(FilePNG, OutImage);
 
         Release(FilePNG);
     }
